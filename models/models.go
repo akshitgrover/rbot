@@ -6,7 +6,7 @@ type Event struct {
 	Id     string
 	Name   string
 	Fields []string
-	values []Record
+	Values []Record
 }
 
 type Admin struct {

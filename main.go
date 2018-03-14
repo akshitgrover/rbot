@@ -6,6 +6,7 @@ import (
 	//"net/http"
 	"log"
 	"rbot/controllers"
+	"rbot/models"
 )
 
 func main() {
@@ -19,5 +20,7 @@ func main() {
 		log.Println(rf)
 		rf = d.AdminAuth(map[string]string{"username": "akshit", "password": "1516"})
 		log.Println(rf)
+		rf, flag := d.CreateEvent(models.Event{Name: "test event", Fields: []string{"name", "email"}})
+		log.Println(rf, flag)
 	}
 }

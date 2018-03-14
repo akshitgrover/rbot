@@ -18,18 +18,17 @@ func (d Db) CreateAdmin(s map[string]string) string {
 	err := d.Session.DB("rbot").C("admin").Find(bson.M{"username": s["username"]}).One(&rf)
 	if err != nil && err.Error() != "not found" {
 		log.Println(err)
-		return ""
+		return "Something Went Wrong"
 	}
 	if rf.Username != "" {
 		return "Username Already Exists"
-		return ""
 	}
 	bs, _ := bcrypt.GenerateFromPassword([]byte(admin.Password), bcrypt.MinCost)
 	admin.Password = string(bs)
 	err = d.Session.DB("rbot").C("admin").Insert(admin)
 	if err != nil {
 		log.Println(err)
-		return ""
+		return "Something Went Wrong"
 	}
 	return "Inserted"
 }
