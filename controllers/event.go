@@ -31,3 +31,25 @@ func (d Db) CreateEvent(s models.Event) (string, string) {
 	}
 	return "Event Created", ""
 }
+
+func (d Db) InsertRecord(name string, s models.Record) string {
+	var fields models.Event
+	err := d.Session.DB("rbot").C("event").Find(bson.M{"id": name}).Select(bson.M{"fields": 1}).One(&fields)
+	if err != nil && err.Error() == "not found" {
+		return "No Such Event Exist"
+	}
+	if err != nil {
+		log.Println(err)
+		return "Something Went Wrong"
+	}
+	values := make(map[string]string)
+	for _, v := range fields.Fields {
+		values[v] = s[v]
+	}
+	err = d.Session.DB("rbot").C("event").Update(bson.M{"id": name}, bson.M{"$push": bson.M{"values": values}})
+	if err != nil {
+		log.Println(err)
+		return "Something Went Wrong"
+	}
+	return "Record Posted Successfully"
+}

@@ -3,8 +3,8 @@ package main
 import (
 	//"github.com/nlopes/slack"
 	"gopkg.in/mgo.v2"
-	//"net/http"
 	"log"
+	"net/http"
 	"rbot/controllers"
 	"rbot/models"
 )
@@ -22,5 +22,9 @@ func main() {
 		log.Println(rf)
 		rf, flag := d.CreateEvent(models.Event{Name: "test event", Fields: []string{"name", "email"}})
 		log.Println(rf, flag)
+		rf = d.InsertRecord("testeventMarch", models.Record{"name": "akshitgrover", "email": "a@a.com"})
+		log.Println(rf)
+		go http.HandleFunc("/event", d.InsertApi)
+		http.ListenAndServe(":8080", nil)
 	}
 }
