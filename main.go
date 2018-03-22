@@ -9,15 +9,26 @@ import (
 	"net/http"
 	"os"
 	"rbot/controllers"
-	"rbot/models"
 )
 
 type c_json struct {
 	Api_token string `json:"api_token"`
+	Mongo_Url string `json:"mongo_url"`
 }
 
 func main() {
-	session, err := mgo.Dial("mongodb://localhost:27017")
+
+	// Reading JSON
+
+	data := ReadJson("./config/config.json")
+
+	// END
+
+	// --------------------------
+
+	// Start Main Script
+
+	session, err := mgo.Dial(data.Mongo_Url)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
@@ -36,14 +47,6 @@ func main() {
 	go http.HandleFunc("/event", d.InsertApi)
 
 	go http.ListenAndServe(":8080", nil)
-
-	// END
-
-	// --------------------------
-
-	// Reading JSON
-
-	data := ReadJson("./config/config.json")
 
 	// END
 
@@ -71,9 +74,11 @@ func main() {
 			// Ignore
 
 		case *slack.MessageEvent:
+			username := info.GetUserByID(ev.Msg.User).Name
+			message := ev.Msg.Text
 			fmt.Println("-------")
-			fmt.Printf("User: %v\n", info.GetUserByID(ev.Msg.User).Name)
-			fmt.Printf("Message: %v\n", ev.Msg.Text)
+			fmt.Printf("User: %v\n", username)
+			fmt.Printf("Message: %v\n", message)
 			fmt.Println("-------")
 			rtm.SendMessage(rtm.NewOutgoingMessage("Hello Akshit", ev.Channel))
 
@@ -94,6 +99,8 @@ func main() {
 			// Ignore
 		}
 	}
+
+	// END Main Script
 
 }
 
