@@ -1,30 +1,117 @@
 package main
 
 import (
-	//"github.com/nlopes/slack"
+	"encoding/json"
+	"fmt"
+	"github.com/nlopes/slack"
 	"gopkg.in/mgo.v2"
 	"log"
 	"net/http"
+	"os"
 	"rbot/controllers"
 	"rbot/models"
 )
+
+type c_json struct {
+	Api_token string `json:"api_token"`
+}
 
 func main() {
 	session, err := mgo.Dial("mongodb://localhost:27017")
 	if err != nil {
 		log.Println(err)
-	} else {
-		d := funcs.Db{Session: session}
-		log.Println("Connected To MongoDb")
-		rf := d.CreateAdmin(map[string]string{"username": "akshitgrover", "password": "1516"})
-		log.Println(rf)
-		rf = d.AdminAuth(map[string]string{"username": "akshit", "password": "1516"})
-		log.Println(rf)
-		rf, flag := d.CreateEvent(models.Event{Name: "test event", Fields: []string{"name", "email"}})
-		log.Println(rf, flag)
-		rf = d.InsertRecord("testeventMarch", models.Record{"name": "akshitgrover", "email": "a@a.com"})
-		log.Println(rf)
-		go http.HandleFunc("/event", d.InsertApi)
-		http.ListenAndServe(":8080", nil)
+		os.Exit(1)
 	}
+
+	// Register Mongo Connection
+
+	d := funcs.Db{Session: session}
+
+	// END
+
+	// --------------------------
+
+	// API Call: Register
+
+	go http.HandleFunc("/event", d.InsertApi)
+
+	go http.ListenAndServe(":8080", nil)
+
+	// END
+
+	// --------------------------
+
+	// Reading JSON
+
+	data := ReadJson("./config/config.json")
+
+	// END
+
+	// ---------------------------
+
+	// Slack API
+
+	api := slack.New(data.Api_token)
+	rtm := api.NewRTM()
+	info, _, _ := api.StartRTM()
+	go rtm.ManageConnection()
+
+	for msg := range rtm.IncomingEvents {
+		switch ev := msg.Data.(type) {
+		case *slack.HelloEvent:
+			// Ignore
+
+		case *slack.ConnectedEvent:
+			// Ignore
+
+		case *slack.IMCreatedEvent:
+			rtm.SendMessage(rtm.NewOutgoingMessage("Hello :)", ev.Channel.ID))
+
+		case *slack.IMCloseEvent:
+			// Ignore
+
+		case *slack.MessageEvent:
+			fmt.Println("-------")
+			fmt.Printf("User: %v\n", info.GetUserByID(ev.Msg.User).Name)
+			fmt.Printf("Message: %v\n", ev.Msg.Text)
+			fmt.Println("-------")
+			rtm.SendMessage(rtm.NewOutgoingMessage("Hello Akshit", ev.Channel))
+
+		case *slack.PresenceChangeEvent:
+			// Ignore
+
+		case *slack.LatencyReport:
+			// Ignore
+
+		case *slack.RTMError:
+			fmt.Printf("Error: %s\n", ev.Error())
+
+		case *slack.InvalidAuthEvent:
+			fmt.Printf("Invalid credentials")
+			return
+
+		default:
+			// Ignore
+		}
+	}
+
+}
+
+func ReadJson(file string) c_json {
+	f, err := os.Open(file)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+	fi, _ := f.Stat()
+	size := fi.Size()
+	bs := make([]byte, size)
+	_, _ = f.Read(bs)
+	var rf c_json
+	err = json.Unmarshal(bs, &rf)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+	return rf
 }
