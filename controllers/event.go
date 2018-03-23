@@ -86,3 +86,20 @@ func (d Db) InsertRecord(name string, s models.Record) string {
 	}
 	return ""
 }
+
+func (d Db) CheckAdmin(username string) int {
+	var rf models.Admin
+	var err error
+	flagch := make(chan int)
+	go func() {
+		FindOneAdmin(d, "admin", bson.M{username: username}, &rf, &err)
+		flagch <- 1
+	}()
+	if <-flagch == 1 {
+		if err.Error() == "not found" {
+			return 2
+		}
+		return 1
+	}
+	return 2
+}

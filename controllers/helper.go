@@ -24,3 +24,8 @@ func Update(d Db, c string, q bson.M, uq bson.M, err *error) {
 	*err = nil
 	*err = d.Session.DB("rbot").C(c).Update(q, uq)
 }
+
+func FindOneAdmin(d Db, c string, q bson.M, rf *models.Admin, err *error) {
+	*err = nil
+	*err = d.Session.DB("rbot").C(c).Find(q).One(rf)
+}

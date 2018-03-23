@@ -9,12 +9,18 @@ import (
 	"net/http"
 	"os"
 	"rbot/controllers"
+	"time"
 )
 
 type c_json struct {
 	Api_token string `json:"api_token"`
 	Mongo_Url string `json:"mongo_url"`
 }
+
+var UserSessions map[string]time.Time
+var Admin map[string]int
+var ActiveEvent map[string]string
+var RegisterFlag bool
 
 func main() {
 
@@ -76,10 +82,30 @@ func main() {
 		case *slack.MessageEvent:
 			username := info.GetUserByID(ev.Msg.User).Name
 			message := ev.Msg.Text
-			fmt.Println("-------")
+			if Admin[username] == 0 && d.CheckAdmin(username) == 1 {
+				Admin[username] = 1
+				UserSessions[username] = time.Now()
+			} else if Admin[username] == 0 {
+				Admin[username] = 2
+			}
+			if Admin[username] != 1 {
+				println("\n\nNot An Admin")
+			} else if !ValidateUserSession(username) {
+				// Ask For EventID
+				RegisterFlag = true
+				println("\n\nInactive")
+				UserSessions[username] = time.Now()
+				continue
+			}
+			if RegisterFlag {
+				// Add Active EventID
+				RegisterFlag = false
+				continue
+			}
+			fmt.Println("\n-------")
 			fmt.Printf("User: %v\n", username)
 			fmt.Printf("Message: %v\n", message)
-			fmt.Println("-------")
+			fmt.Println("-------\n")
 			rtm.SendMessage(rtm.NewOutgoingMessage("Hello Akshit", ev.Channel))
 
 		case *slack.PresenceChangeEvent:
@@ -89,14 +115,14 @@ func main() {
 			// Ignore
 
 		case *slack.RTMError:
-			fmt.Printf("Error: %s\n", ev.Error())
+			fmt.Printf("\n\nError: %s\n", ev.Error())
 
 		case *slack.InvalidAuthEvent:
-			fmt.Printf("Invalid credentials")
+			fmt.Printf("\n\nInvalid credentials")
 			return
 
 		default:
-			// Ignore
+			fmt.Printf("\n\nUnable To Catch Event, Event Type: %T", ev)
 		}
 	}
 
@@ -121,4 +147,12 @@ func ReadJson(file string) c_json {
 		os.Exit(1)
 	}
 	return rf
+}
+
+func ValidateUserSession(username string) bool {
+	d := time.Now().Sub(UserSessions[username])
+	if d > time.Minute*2 {
+		return false
+	}
+	return true
 }
