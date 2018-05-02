@@ -17,10 +17,17 @@ type c_json struct {
 	Mongo_Url string `json:"mongo_url"`
 }
 
-var UserSessions map[string]time.Time
-var Admin map[string]int
-var ActiveEvent map[string]string
+var UserSessions = make(map[string]time.Time)
+var Admin = make(map[string]int)
+var ActiveEvent = make(map[string]string)
 var RegisterFlag bool
+
+var instants = map[string]bool{
+	"get event":    true,
+	"add event":    true,
+	"remove event": true,
+	"make admin":   true,
+}
 
 func main() {
 
@@ -106,7 +113,8 @@ func main() {
 			fmt.Printf("User: %v\n", username)
 			fmt.Printf("Message: %v\n", message)
 			fmt.Println("-------\n")
-			rtm.SendMessage(rtm.NewOutgoingMessage("Hello Akshit", ev.Channel))
+			log.Println(ev.Channel)
+			rtm.SendMessage(rtm.NewOutgoingMessage("Test Message!", ev.Channel))
 
 		case *slack.PresenceChangeEvent:
 			// Ignore

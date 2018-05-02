@@ -37,7 +37,7 @@ func (d Db) AdminAuth(s map[string]string) string {
 	var rf models.Admin
 	err := d.Session.DB("rbot").C("admin").Find(bson.M{"username": s["username"]}).One(&rf)
 	if err != nil && err.Error() == "not found" {
-		return "Invalid Username/Password"
+		return "Unauthenticated"
 	}
 	if err != nil {
 		return "Something Went Wrong"
