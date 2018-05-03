@@ -46,6 +46,8 @@ var Texts = map[string]string{
 	"1--":      "Sorry! Unfortunately Event Id Is Invalid! Try Again!",
 	"1-+":      "Hooray! Your Session Is Active!",
 	"2+":       "Cool, Would Like To Mention Some EventId Please!",
+	"5+":       "Please Mention The Admin Username!",
+	"5-":       "Hooray! Admin Added Successfully",
 }
 
 func StateTwo(ses MSession, eventid string) string {

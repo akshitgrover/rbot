@@ -45,11 +45,15 @@ func RecvResponse(ses MSession, username string, message string) string {
 		SetState(username, -1)
 		return StateTwo(ses, message)
 	}
+	if state == 5 {
+		SetState(username, -1)
+		AddAdmin(message)
+		return Texts["5-"]
+	}
 	if state == 7 {
 		return StateSeven(ses, username, message)
 	}
 	if state == 9 && !ses.CheckEventValid(message) {
-		println("~~~~~~~")
 		return Texts["1--"]
 	} else if state == 9 {
 		AddSession(username, message)
