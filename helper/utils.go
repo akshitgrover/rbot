@@ -25,7 +25,7 @@ type Config struct {
 }
 
 type Admin struct {
-	Admin map[string]bool
+	Admin map[string]bool `json:"admin"`
 }
 
 func ReadConfigJson() Config {
@@ -44,7 +44,7 @@ func AddURL(event_id string, url string) {
 	data := ReadConfigJson()
 	data.Urls[event_id] = url
 	b, _ := json.Marshal(data)
-	f, _ := os.Open("./config.config.json")
+	f, _ := os.OpenFile("./config.config.json", os.O_RDWR, 0666)
 	f.Write(b)
 	f.Close()
 }
@@ -85,8 +85,10 @@ func CheckAdmin(username string) bool {
 func AddAdmin(username string) {
 	data := ReadAdminJson()
 	data.Admin[username] = true
+	log.Println(data)
 	b, _ := json.Marshal(data)
-	f, _ := os.Open("./config/admin.json")
+	log.Println(string(b))
+	f, _ := os.OpenFile("./config/admin.json", os.O_RDWR, 0666)
 	f.Write(b)
 	f.Close()
 }
