@@ -12,8 +12,12 @@ func Insert(d *mgo.Session, c string, e interface{}, err *error) {
 
 func FindOne(d *mgo.Session, c string, q bson.M, rf interface{}, err *error) {
 	*err = nil
-	println(c)
 	*err = d.DB("rbot").C(c).Find(q).One(rf)
+}
+
+func FindAll(d *mgo.Session, c string, q bson.M, rf interface{}, err *error, dbname string) {
+	*err = nil
+	*err = d.DB(dbname).C(c).Find(q).All(rf)
 }
 
 func FindOneProject(d *mgo.Session, c string, q bson.M, p bson.M, rf interface{}, err *error) {
