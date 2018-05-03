@@ -1,15 +1,15 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/nlopes/slack"
 	"gopkg.in/mgo.v2"
 	"log"
 	"net/http"
 	"os"
-	"rbot/controllers"
-	"time"
+	"rbot/config"
+	"rbot/helper"
+	"strings"
 )
 
 type c_json struct {
@@ -17,47 +17,24 @@ type c_json struct {
 	Mongo_Url string `json:"mongo_url"`
 }
 
-var UserSessions = make(map[string]time.Time)
-var Admin = make(map[string]int)
-var ActiveEvent = make(map[string]string)
-var RegisterFlag bool
-
-var instants = map[string]bool{
-	"get event":    true,
-	"add event":    true,
-	"remove event": true,
-	"make admin":   true,
-}
+// var UserSessions = make(map[string]time.Time)
+// var Admin = make(map[string]int)
 
 func main() {
 
-	// Reading JSON
-
-	data := ReadJson("./config/config.json")
-
-	// END
-
-	// --------------------------
-
 	// Start Main Script
 
-	session, err := mgo.Dial(data.Mongo_Url)
+	data := helper.ReadConfigJson()
+	msession, err := mgo.Dial(config.Mongo_Url)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
-
-	// Register Mongo Connection
-
-	d := funcs.Db{Session: session}
-
-	// END
+	fses := helper.MSession{Ses: msession}
 
 	// --------------------------
 
 	// API Call: Register
-
-	go http.HandleFunc("/event", d.InsertApi)
 
 	go http.ListenAndServe(":8080", nil)
 
@@ -67,7 +44,7 @@ func main() {
 
 	// Slack API
 
-	api := slack.New(data.Api_token)
+	api := slack.New(data.Token)
 	rtm := api.NewRTM()
 	info, _, _ := api.StartRTM()
 	go rtm.ManageConnection()
@@ -75,7 +52,7 @@ func main() {
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *slack.HelloEvent:
-			// Ignore
+			//Ignore
 
 		case *slack.ConnectedEvent:
 			// Ignore
@@ -88,33 +65,12 @@ func main() {
 
 		case *slack.MessageEvent:
 			username := info.GetUserByID(ev.Msg.User).Name
-			message := ev.Msg.Text
-			if Admin[username] == 0 && d.CheckAdmin(username) == 1 {
-				Admin[username] = 1
-				UserSessions[username] = time.Now()
-			} else if Admin[username] == 0 {
-				Admin[username] = 2
-			}
-			if Admin[username] != 1 {
-				println("\n\nNot An Admin")
-			} else if !ValidateUserSession(username) {
-				// Ask For EventID
-				RegisterFlag = true
-				println("\n\nInactive")
-				UserSessions[username] = time.Now()
-				continue
-			}
-			if RegisterFlag {
-				// Add Active EventID
-				RegisterFlag = false
-				continue
-			}
-			fmt.Println("\n-------")
-			fmt.Printf("User: %v\n", username)
-			fmt.Printf("Message: %v\n", message)
-			fmt.Println("-------\n")
-			log.Println(ev.Channel)
-			rtm.SendMessage(rtm.NewOutgoingMessage("Test Message!", ev.Channel))
+			message := strings.ToLower(ev.Msg.Text)
+
+			go LogMessage(username, message)
+			msg := helper.RecvResponse(fses, username, message)
+			log.Println(msg + "~")
+			rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Channel))
 
 		case *slack.PresenceChangeEvent:
 			// Ignore
@@ -138,29 +94,9 @@ func main() {
 
 }
 
-func ReadJson(file string) c_json {
-	f, err := os.Open(file)
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
-	fi, _ := f.Stat()
-	size := fi.Size()
-	bs := make([]byte, size)
-	_, _ = f.Read(bs)
-	var rf c_json
-	err = json.Unmarshal(bs, &rf)
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
-	return rf
-}
-
-func ValidateUserSession(username string) bool {
-	d := time.Now().Sub(UserSessions[username])
-	if d > time.Minute*2 {
-		return false
-	}
-	return true
+func LogMessage(username string, message string) {
+	fmt.Println("\n-------")
+	fmt.Printf("User: %v\n", username)
+	fmt.Printf("Message: %v\n", message)
+	fmt.Println("-------\n")
 }

@@ -1,31 +1,32 @@
 package funcs
 
 import (
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"rbot/models"
 )
 
-func Insert(d Db, c string, e models.Event, err *error) {
+func Insert(d *mgo.Session, c string, e interface{}, err *error) {
 	*err = nil
-	*err = d.Session.DB("rbot").C(c).Insert(e)
+	*err = d.DB("rbot").C(c).Insert(e)
 }
 
-func FindOne(d Db, c string, q bson.M, rf *models.Event, err *error) {
+func FindOne(d *mgo.Session, c string, q bson.M, rf interface{}, err *error) {
 	*err = nil
-	*err = d.Session.DB("rbot").C(c).Find(q).One(rf)
+	println(c)
+	*err = d.DB("rbot").C(c).Find(q).One(rf)
 }
 
-func FindOneProject(d Db, c string, q bson.M, p bson.M, rf *models.Event, err *error) {
+func FindOneProject(d *mgo.Session, c string, q bson.M, p bson.M, rf interface{}, err *error) {
 	*err = nil
-	*err = d.Session.DB("rbot").C(c).Find(q).Select(p).One(rf)
+	*err = d.DB("rbot").C(c).Find(q).Select(p).One(rf)
 }
 
-func Update(d Db, c string, q bson.M, uq bson.M, err *error) {
+func Update(d *mgo.Session, c string, q bson.M, uq bson.M, err *error) {
 	*err = nil
-	*err = d.Session.DB("rbot").C(c).Update(q, uq)
+	*err = d.DB("rbot").C(c).Update(q, uq)
 }
 
-func FindOneAdmin(d Db, c string, q bson.M, rf *models.Admin, err *error) {
+func FindOneAdmin(d *mgo.Session, c string, q bson.M, rf interface{}, err *error) {
 	*err = nil
-	*err = d.Session.DB("rbot").C(c).Find(q).One(rf)
+	*err = d.DB("rbot").C(c).Find(q).One(rf)
 }
