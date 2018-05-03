@@ -108,7 +108,7 @@ func AddTimer(username string) {
 
 func CheckTimer(username string) bool {
 	log.Println(UserTimer[username].Sub(time.Now()))
-	if UserTimer[username].IsZero() || time.Now().Sub(UserTimer[username]) > 5*time.Minute {
+	if UserTimer[username].IsZero() || time.Now().Sub(UserTimer[username]) > 5*time.Second {
 		return false
 	}
 	return true
@@ -130,7 +130,7 @@ func SetState(username string, state int) {
 func (ses MSession) CheckEventValid(eventid string) bool {
 	var err error
 	var ev models.Event
-	funcs.FindOne(ses.Ses, "event", bson.M{"id": bson.M{"$regex": eventid, "$options": "i"}}, &ev, &err)
+	funcs.FindOne(ses.Ses, "event", bson.M{"id": bson.M{"$regex": "^" + eventid + "$", "$options": "i"}}, &ev, &err)
 	if err != nil && err.Error() == "not found" {
 		return false
 	}
@@ -138,7 +138,7 @@ func (ses MSession) CheckEventValid(eventid string) bool {
 }
 
 func DelMongoSession(eventid string) {
-	timer := time.NewTimer(5 * time.Minute)
+	timer := time.NewTimer(5 * time.Second)
 	<-timer.C
 	activeSessions[eventid].Close()
 	activeSessions[eventid] = nil

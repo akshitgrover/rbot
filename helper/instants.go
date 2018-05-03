@@ -25,6 +25,11 @@ var StateInstants = map[string]int{
 	"make admin":   5,
 }
 
+var ReqActiveEidInstants = map[string]bool{
+	"get event":    true,
+	"remove event": true,
+}
+
 var InverStateInstants = map[int]string{
 	2: "get event",
 	3: "add event",
@@ -61,7 +66,7 @@ func StateTwo(ses MSession, eventid string) string {
 			return Texts["dberror"]
 		}
 		activeSessions[eventid] = session
-		go DelSession(eventid)
+		go DelMongoSession(eventid)
 	} else {
 		session = activeSessions[eventid]
 	}
