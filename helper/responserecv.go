@@ -45,6 +45,10 @@ func RecvResponse(ses MSession, username string, message string) string {
 		SetState(username, -1)
 		return StateTwo(ses, message)
 	}
+	if state == 3 {
+		SetState(username, -1)
+		return StateThree(ses, username, message)
+	}
 	if state == 5 {
 		SetState(username, -1)
 		AddAdmin(message)

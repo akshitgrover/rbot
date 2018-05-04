@@ -69,7 +69,6 @@ func main() {
 
 			go LogMessage(username, message)
 			msg := helper.RecvResponse(fses, username, message)
-			log.Println(msg + "~")
 			rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Channel))
 
 		case *slack.PresenceChangeEvent:

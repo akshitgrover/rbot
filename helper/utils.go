@@ -132,7 +132,9 @@ func SetState(username string, state int) {
 func (ses MSession) CheckEventValid(eventid string) bool {
 	var err error
 	var ev models.Event
+	log.Println(eventid)
 	funcs.FindOne(ses.Ses, "event", bson.M{"id": bson.M{"$regex": "^" + eventid + "$", "$options": "i"}}, &ev, &err)
+	log.Println(err)
 	if err != nil && err.Error() == "not found" {
 		return false
 	}

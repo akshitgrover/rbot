@@ -5,8 +5,10 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"rbot/controllers"
+	"rbot/models"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var activeSessions = make(map[string]*mgo.Session)
@@ -23,6 +25,7 @@ var StateInstants = map[string]int{
 	"add event":    3,
 	"remove event": 4,
 	"make admin":   5,
+	"add dburl":    6,
 }
 
 var ReqActiveEidInstants = map[string]bool{
@@ -32,7 +35,6 @@ var ReqActiveEidInstants = map[string]bool{
 
 var InverStateInstants = map[int]string{
 	2: "get event",
-	3: "add event",
 	4: "remove event",
 	5: "make admin",
 }
@@ -48,6 +50,10 @@ var Texts = map[string]string{
 	"2+":       "Cool, Would Like To Mention Some EventId Please!",
 	"5+":       "Please Mention The Admin Username!",
 	"5-":       "Hooray! Admin Added Successfully",
+	"3+":       "Please Provide Event Structures",
+	"3-":       "Error Occured While Entering An Event! Try Again!",
+	"3--":      "Incomplete Details Provided",
+	"3++":      "Event Added Successfully! Event Id: ",
 }
 
 func StateTwo(ses MSession, eventid string) string {
@@ -56,6 +62,9 @@ func StateTwo(ses MSession, eventid string) string {
 	}
 	data := ReadConfigJson()
 	url := data.Urls[eventid]
+	if url == "" {
+		return Texts["dberror"]
+	}
 	flag := strings.Split(url, "/")
 	dbname := flag[len(flag)-1]
 	var session *mgo.Session
@@ -77,6 +86,42 @@ func StateTwo(ses MSession, eventid string) string {
 	var res = "Event Id: " + eventid + "\r\n" + "Count: " + strconv.Itoa(len(ev))
 	log.Println(ses.CheckEventValid(eventid))
 	return res
+}
+
+func StateThree(ses MSession, username, message string) string {
+	var ev models.Event
+	ev.Fields = []string{}
+	var flag = strings.Split(message, "\n")
+	var count int
+	for _, s := range flag {
+		str_slice := strings.Split(s, ":")
+		log.Println(str_slice[0])
+		if strings.Trim(strings.ToLower(str_slice[0]), " ") == "name" {
+			str_slice[1] = strings.ToLower(str_slice[1])
+			f := strings.Join(strings.Split(str_slice[1], " "), "")
+			ev.Id = strings.Trim(f, " ") + time.Now().Month().String()
+			ev.Name = strings.Trim(str_slice[1], " ")
+			count++
+		} else if strings.Trim(strings.ToLower(str_slice[0]), " ") == "fields" {
+			f := strings.Split(str_slice[1], ",")
+			for _, sf := range f {
+				ev.Fields = append(ev.Fields, sf)
+			}
+			count++
+		}
+
+	}
+	if count != 2 {
+		SetState(username, 3)
+		return Texts["3--"]
+	}
+	var err error
+	funcs.Insert(ses.Ses, "event", ev, &err)
+	if err != nil {
+		SetState(username, 3)
+		return Texts["3-"]
+	}
+	return Texts["3++"] + ev.Id
 }
 
 func StateSeven(ses MSession, username string, res string) string {
