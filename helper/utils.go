@@ -18,6 +18,7 @@ type MSession struct {
 var UserSession = make(map[string]string)
 var UserState = make(map[string]int)
 var UserTimer = make(map[string]time.Time)
+var EventDbState = make(map[string]time.Time)
 
 type Config struct {
 	Token string            `json:"api_token"`
@@ -40,13 +41,29 @@ func ReadConfigJson() Config {
 	return data
 }
 
-func AddURL(event_id string, url string) {
+func AddDbURL(eventid string, url string) {
 	data := ReadConfigJson()
-	data.Urls[event_id] = url
+	data.Urls[eventid] = url
 	b, _ := json.Marshal(data)
 	f, _ := os.OpenFile("./config.config.json", os.O_RDWR, 0666)
 	f.Write(b)
 	f.Close()
+}
+
+func AddEventDbState(username string, eventid state) {
+	EventDbState[username] = eventid
+}
+
+func GetEventDbState(username string) {
+	return EventDbState[username]
+}
+
+func DelEventDbState(username) {
+	timer := time.NewTimer(5 * time.Minute)
+	<-timer.C
+	if EventDbState[username] != "" {
+		delete(EventDbState, username)
+	}
 }
 
 func MongoConnect(event_id string) (*mgo.Session, bool) {

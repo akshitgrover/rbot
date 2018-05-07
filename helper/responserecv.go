@@ -54,6 +54,10 @@ func RecvResponse(ses MSession, username string, message string) string {
 		AddAdmin(message)
 		return Texts["5-"]
 	}
+	if state == 6 {
+		SetState(username, -1)
+		return StateSix(username, message)
+	}
 	if state == 7 {
 		return StateSeven(ses, username, message)
 	}
@@ -61,6 +65,9 @@ func RecvResponse(ses MSession, username string, message string) string {
 		return Texts["1--"]
 	} else if state == 9 {
 		AddSession(username, message)
+		if TimerState[username] == 6 {
+			AddEventDbState(username, message)
+		}
 		SetState(username, TimerState[username])
 		TimerState[username] = 0
 		AddTimer(username)
