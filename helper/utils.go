@@ -18,7 +18,7 @@ type MSession struct {
 var UserSession = make(map[string]string)
 var UserState = make(map[string]int)
 var UserTimer = make(map[string]time.Time)
-var EventDbState = make(map[string]time.Time)
+var EventDbState = make(map[string]string)
 
 type Config struct {
 	Token string            `json:"api_token"`
@@ -45,20 +45,20 @@ func AddDbURL(eventid string, url string) {
 	data := ReadConfigJson()
 	data.Urls[eventid] = url
 	b, _ := json.Marshal(data)
-	f, _ := os.OpenFile("./config.config.json", os.O_RDWR, 0666)
+	f, _ := os.OpenFile("./config/config.json", os.O_RDWR, 0666)
 	f.Write(b)
 	f.Close()
 }
 
-func AddEventDbState(username string, eventid state) {
+func AddEventDbState(username string, eventid string) {
 	EventDbState[username] = eventid
 }
 
-func GetEventDbState(username string) {
+func GetEventDbState(username string) string {
 	return EventDbState[username]
 }
 
-func DelEventDbState(username) {
+func DelEventDbState(username string) {
 	timer := time.NewTimer(5 * time.Minute)
 	<-timer.C
 	if EventDbState[username] != "" {

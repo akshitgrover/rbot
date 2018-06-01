@@ -20,7 +20,14 @@ func RecvResponse(ses MSession, username string, message string) string {
 	}
 	if Instants[message] && !ReqActiveEidInstants[message] {
 		SetState(username, StateInstants[message])
-		return Texts[strconv.Itoa(GetState(username))+"+"]
+		if GetState(username) != 6 {
+			return Texts[strconv.Itoa(GetState(username))+"+"]
+		}
+		if GetState(username) == 6 && GetEventDbState(username) == "" {
+			SetState(username, 9)
+			TimerState[username] = 10
+			return Texts["6-"]
+		}
 	}
 	if state == 1 && !ses.CheckEventValid(message) {
 		return Texts["1--"]
@@ -61,17 +68,24 @@ func RecvResponse(ses MSession, username string, message string) string {
 	if state == 7 {
 		return StateSeven(ses, username, message)
 	}
+	if state == 8 {
+		return StateEight(ses, username, message)
+	}
 	if state == 9 && !ses.CheckEventValid(message) {
 		return Texts["1--"]
 	} else if state == 9 {
 		AddSession(username, message)
-		if TimerState[username] == 6 {
+		if TimerState[username] == 10 {
 			AddEventDbState(username, message)
 		}
 		SetState(username, TimerState[username])
 		TimerState[username] = 0
 		AddTimer(username)
 		return RecvResponse(ses, username, UserSession[username])
+	}
+	if state == 10 {
+		SetState(username, 6)
+		return Texts["6+"]
 	}
 	return ""
 }

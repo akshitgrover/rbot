@@ -19,6 +19,7 @@ var Instants = map[string]bool{
 	"remove event": true,
 	"make admin":   true,
 	"add dburl":    true,
+	"get apiurl":   true,
 }
 
 var StateInstants = map[string]int{
@@ -27,16 +28,19 @@ var StateInstants = map[string]int{
 	"remove event": 4,
 	"make admin":   5,
 	"add dburl":    6,
+	"get apiurl":   8,
 }
 
 var ReqActiveEidInstants = map[string]bool{
 	"get event":    true,
 	"remove event": true,
+	"get apiurl":   true,
 }
 
 var InverStateInstants = map[int]string{
 	2: "get event",
 	4: "remove event",
+	8: "get apiurl",
 }
 
 var Texts = map[string]string{
@@ -54,6 +58,7 @@ var Texts = map[string]string{
 	"3-":       "Error Occured While Entering An Event! Try Again!",
 	"3--":      "Incomplete Details Provided",
 	"3++":      "Event Added Successfully! Event Id: ",
+	"6+":       "Please Provide Db Url!",
 	"6-":       "Cannot Find A Event Add State! Please Help By Providing An EventId!",
 	"6-+":      "Event Db Url Added Successfully!",
 }
@@ -127,11 +132,11 @@ func StateThree(ses MSession, username, message string) string {
 	return Texts["3++"] + ev.Id
 }
 
-func StateSix(username string, message string) {
+func StateSix(username string, message string) string {
 	eventid := GetEventDbState(username)
 	if eventid == "" {
 		SetState(username, 9)
-		TimerState[username] = 6
+		TimerState[username] = 10
 		return Texts["6-"]
 	}
 	AddDbURL(eventid, message)
@@ -148,4 +153,8 @@ func StateSeven(ses MSession, username string, res string) string {
 		SetState(username, 9)
 		return Texts["2+"]
 	}
+}
+
+func StateEight(ses MSession, username string, res string) string {
+	return ""
 }
